@@ -1,0 +1,810 @@
+local TARGET_ITEMS = {
+	Mossite = true,
+	Voltite = true,
+	Gildrite = true,
+	Rimeveil = true,
+	Nocturnite = true,
+}
+
+
+local ITEM_ENABLED = {
+	Mossite = true,
+	Voltite = true,
+	Gildrite = true,
+	Rimeveil = true,
+	Nocturnite = true,
+}
+
+
+local ESP_ENABLED = true
+local INSTANT_E = false
+local NAME_ESP_ENABLED = false
+local ANTI_AFK_ENABLED = false
+
+local player = game.Players.LocalPlayer
+local UIS = game:GetService("UserInputService")
+
+
+------------------------------------------------
+-- GUI
+------------------------------------------------
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "WinnerV3.0"
+gui.ResetOnSpawn = false
+gui.Parent = player.PlayerGui
+
+
+local frame = Instance.new("ScrollingFrame")
+frame.Size = UDim2.new(0,250,0,430)
+frame.Position = UDim2.new(0.05,0,0.3,0)
+frame.BackgroundColor3 = Color3.fromRGB(25,25,25)
+frame.CanvasSize = UDim2.new(0,0,0,500)
+frame.ScrollBarThickness = 6
+frame.Active = true
+frame.Parent = gui
+
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1,0,0,40)
+title.BackgroundColor3 = Color3.fromRGB(0,170,255)
+title.Text = "Winner V3.0"
+title.TextColor3 = Color3.new(1,1,1)
+title.TextScaled = true
+title.Font = Enum.Font.SourceSansBold
+title.Parent = frame
+
+-- UI DRAG SYSTEM
+
+local dragging = false
+local dragStart
+local startPos
+
+
+title.InputBegan:Connect(function(input)
+
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+
+		dragging = true
+		dragStart = input.Position
+		startPos = frame.Position
+
+	end
+
+end)
+
+
+
+title.InputEnded:Connect(function(input)
+
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+
+		dragging = false
+
+	end
+
+end)
+
+
+
+UIS.InputChanged:Connect(function(input)
+
+	if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+
+		local delta = input.Position - dragStart
+
+
+		frame.Position = UDim2.new(
+			startPos.X.Scale,
+			startPos.X.Offset + delta.X,
+			startPos.Y.Scale,
+			startPos.Y.Offset + delta.Y
+		)
+
+	end
+
+end)
+
+
+local function createButton(text,y)
+
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(0.8,0,0,35)
+	btn.Position = UDim2.new(0.1,0,0,y)
+	btn.Text = text
+	btn.TextScaled = true
+	btn.Font = Enum.Font.SourceSansBold
+	btn.Parent = frame
+
+	return btn
+end
+
+
+
+
+------------------------------------------------
+-- ESP ALL BUTTON
+------------------------------------------------
+
+local espButton = createButton("ESP ALL : เปิด",50)
+espButton.BackgroundColor3 = Color3.fromRGB(0,200,100)
+
+
+
+espButton.MouseButton1Click:Connect(function()
+
+	ESP_ENABLED = not ESP_ENABLED
+
+
+	if ESP_ENABLED then
+		espButton.Text = "ESP ALL : เปิด"
+		espButton.BackgroundColor3 = Color3.fromRGB(0,200,100)
+	else
+		espButton.Text = "ESP ALL : ปิด"
+		espButton.BackgroundColor3 = Color3.fromRGB(200,50,50)
+	end
+
+
+	for _,obj in ipairs(workspace:GetDescendants()) do
+
+		local h = obj:FindFirstChild("ItemHighlight")
+		local d = obj:FindFirstChild("DistanceESP")
+
+		if h then
+			h.Enabled = ESP_ENABLED
+		end
+
+		if d then
+			d.Enabled = ESP_ENABLED
+		end
+
+	end
+
+end)
+
+
+
+------------------------------------------------
+-- ITEM BUTTONS
+------------------------------------------------
+
+local itemList = {
+	"Mossite",
+	"Voltite",
+	"Gildrite",
+	"Rimeveil",
+	"Nocturnite"
+}
+
+
+local y = 90
+
+
+for _,name in ipairs(itemList) do
+
+
+	local btn = createButton(
+		name.." : เปิด",
+		y
+	)
+
+
+	btn.BackgroundColor3 = Color3.fromRGB(0,200,100)
+
+
+	btn.MouseButton1Click:Connect(function()
+
+
+		ITEM_ENABLED[name] = not ITEM_ENABLED[name]
+
+
+		if ITEM_ENABLED[name] then
+
+			btn.Text = name.." : เปิด"
+			btn.BackgroundColor3 = Color3.fromRGB(0,200,100)
+
+		else
+
+			btn.Text = name.." : ปิด"
+			btn.BackgroundColor3 = Color3.fromRGB(200,50,50)
+
+		end
+
+
+
+		for _,obj in ipairs(workspace:GetDescendants()) do
+
+			if obj.Name == name then
+
+				local h = obj:FindFirstChild("ItemHighlight")
+				local d = obj:FindFirstChild("DistanceESP")
+
+
+				if h then
+					h.Enabled = ITEM_ENABLED[name]
+				end
+
+
+				if d then
+					d.Enabled = ITEM_ENABLED[name]
+				end
+
+			end
+
+		end
+
+
+	end)
+
+
+	y = y + 40
+
+end
+
+
+
+------------------------------------------------
+-- RIGHT CTRL UI TOGGLE
+------------------------------------------------
+
+UIS.InputBegan:Connect(function(input,gp)
+
+	if gp then return end
+
+	if input.KeyCode == Enum.KeyCode.RightControl then
+
+		frame.Visible = not frame.Visible
+
+	end
+
+end)
+
+
+
+------------------------------------------------
+-- DISTANCE
+------------------------------------------------
+
+local function getCharacter()
+
+	return player.Character or player.CharacterAdded:Wait()
+
+end
+
+
+
+local function getDistance(obj)
+
+	local char = getCharacter()
+	local root = char:FindFirstChild("HumanoidRootPart")
+
+	if not root then
+		return 0
+	end
+
+
+	local part
+
+
+	if obj:IsA("Model") then
+
+		part = obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")
+
+
+	elseif obj:IsA("BasePart") then
+
+		part = obj
+
+	end
+
+
+
+	if part then
+
+		return math.floor(
+			(root.Position - part.Position).Magnitude
+		)
+
+	end
+
+
+	return 0
+
+end
+
+
+
+
+------------------------------------------------
+-- CREATE ESP
+------------------------------------------------
+
+local function addESP(obj)
+
+
+	if not TARGET_ITEMS[obj.Name] then
+		return
+	end
+
+
+	if not ITEM_ENABLED[obj.Name] then
+		return
+	end
+
+
+	if not ESP_ENABLED then
+		return
+	end
+
+
+
+	local target
+
+
+	if obj:IsA("Model") then
+
+		target = obj
+
+	elseif obj:IsA("BasePart") then
+
+		target = obj
+
+	else
+
+		return
+
+	end
+
+
+
+
+	-- Highlight
+
+	if not target:FindFirstChild("ItemHighlight") then
+
+
+		local h = Instance.new("Highlight")
+
+		h.Name = "ItemHighlight"
+		h.Adornee = target
+		h.FillColor = Color3.fromRGB(255,0,0)
+		h.FillTransparency = 1
+		h.OutlineColor = Color3.fromRGB(255,0,0)
+		h.OutlineTransparency = 0
+		h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+		h.Parent = target
+
+
+	end
+
+
+
+
+	-- Text
+
+	if not target:FindFirstChild("DistanceESP") then
+
+
+		local bill = Instance.new("BillboardGui")
+
+		bill.Name = "DistanceESP"
+		bill.Size = UDim2.new(0,150,0,40)
+		bill.StudsOffset = Vector3.new(0,3,0)
+		bill.AlwaysOnTop = true
+		bill.Adornee = target
+		bill.Parent = target
+
+
+
+		local text = Instance.new("TextLabel")
+
+
+		text.Size = UDim2.new(1,0,1,0)
+		text.BackgroundTransparency = 1
+		text.TextColor3 = Color3.fromRGB(0,255,255)
+		text.TextStrokeTransparency = 0
+		text.TextScaled = true
+		text.Font = Enum.Font.SourceSansBold
+		text.Parent = bill
+
+
+
+		task.spawn(function()
+
+
+			while target.Parent do
+
+
+				if ESP_ENABLED and ITEM_ENABLED[obj.Name] then
+
+					text.Text =
+						obj.Name.." ["..
+						getDistance(target)
+						.."m]"
+
+				else
+
+					text.Text = ""
+
+				end
+
+
+				task.wait(0.2)
+
+			end
+
+
+		end)
+
+	end
+
+end
+
+
+
+
+------------------------------------------------
+-- SCAN
+------------------------------------------------
+
+task.spawn(function()
+
+	while true do
+
+
+		for _,obj in ipairs(workspace:GetDescendants()) do
+
+			addESP(obj)
+
+		end
+
+
+		task.wait(1)
+
+	end
+
+end)
+
+
+
+workspace.DescendantAdded:Connect(function(obj)
+
+	task.wait(0.1)
+
+	addESP(obj)
+
+end)
+
+------------------------------------------------
+-- INSTANT E SYSTEM
+------------------------------------------------
+
+local function setupPrompt(obj)
+
+	if not obj:IsA("ProximityPrompt") then
+		return
+	end
+
+
+	if INSTANT_E then
+
+		obj.HoldDuration = 0
+		obj.RequiresLineOfSight = false
+
+	else
+
+		obj.HoldDuration = 1
+
+	end
+
+end
+
+
+
+-- ใช้กับของที่มีอยู่แล้ว
+for _,obj in ipairs(workspace:GetDescendants()) do
+
+	setupPrompt(obj)
+
+end
+
+
+
+-- ใช้กับของที่เกิดใหม่
+workspace.DescendantAdded:Connect(function(obj)
+
+	task.wait(0.1)
+
+	setupPrompt(obj)
+
+end)
+------------------------------------------------
+-- INSTANT E SYSTEM
+------------------------------------------------
+
+local eButton = createButton(
+	"กด E เร็ว : ปิด",
+	350
+)
+
+eButton.BackgroundColor3 =
+	Color3.fromRGB(200,50,50)
+
+
+
+eButton.MouseButton1Click:Connect(function()
+
+	INSTANT_E = not INSTANT_E
+
+
+	if INSTANT_E then
+
+		eButton.Text = "กด E ไว : เปิด"
+
+		eButton.BackgroundColor3 =
+			Color3.fromRGB(0,200,100)
+
+	else
+
+		eButton.Text = "กด E ไว : ปิด"
+
+		eButton.BackgroundColor3 =
+			Color3.fromRGB(200,50,50)
+
+	end
+
+
+
+	for _,obj in ipairs(workspace:GetDescendants()) do
+
+		if obj:IsA("ProximityPrompt") then
+
+			obj.HoldDuration =
+				INSTANT_E and 0 or 1
+
+			obj.RequiresLineOfSight = false
+
+		end
+
+	end
+
+end)
+
+
+
+workspace.DescendantAdded:Connect(function(obj)
+
+	if obj:IsA("ProximityPrompt") then
+
+		task.wait(0.1)
+
+
+		if INSTANT_E then
+
+			obj.HoldDuration = 0
+			obj.RequiresLineOfSight = false
+
+		end
+
+	end
+
+end)
+
+local nameESPButton = createButton(
+	"มองผู้เล่น : ปิด",
+	390,
+	false
+)
+
+nameESPButton.BackgroundColor3 =
+	Color3.fromRGB(200,50,50)
+
+
+nameESPButton.MouseButton1Click:Connect(function()
+
+	NAME_ESP_ENABLED = not NAME_ESP_ENABLED
+
+	if NAME_ESP_ENABLED then
+		nameESPButton.Text = "มองผู้เล่น : เปิด"
+		nameESPButton.BackgroundColor3 =
+			Color3.fromRGB(0,200,100)
+	else
+		nameESPButton.Text = "มองผู้เล่น : ปิด"
+		nameESPButton.BackgroundColor3 =
+			Color3.fromRGB(200,50,50)
+	end
+
+end)
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Camera = workspace.CurrentCamera
+
+local LocalPlayer = Players.LocalPlayer
+
+local function CreateNameESP(player)
+
+	if player == LocalPlayer then
+		return
+	end
+
+
+	local nameDrawing = Drawing.new("Text")
+
+	nameDrawing.Center = true
+	nameDrawing.Outline = true
+	nameDrawing.Size = 14
+	nameDrawing.Font = 2
+	nameDrawing.Color = Color3.fromRGB(255,255,255)
+	nameDrawing.Visible = false
+
+
+
+	RunService.RenderStepped:Connect(function()
+
+		if not NAME_ESP_ENABLED then
+			nameDrawing.Visible = false
+			return
+		end
+
+
+		if not player.Character 
+		or not player.Character:FindFirstChild("HumanoidRootPart") then
+
+			nameDrawing.Visible = false
+			return
+
+		end
+
+
+
+		local hrp = player.Character.HumanoidRootPart
+
+
+		local pos,onScreen =
+			Camera:WorldToViewportPoint(
+				hrp.Position + Vector3.new(0,2.5,0)
+			)
+
+
+
+		if onScreen then
+
+			local myChar = LocalPlayer.Character
+			local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
+
+
+			local distance = 0
+
+			if myRoot then
+				distance =
+					(hrp.Position - myRoot.Position).Magnitude
+			end
+
+
+
+			nameDrawing.Text =
+				player.Name.." ["..
+				math.floor(distance)..
+				"m]"
+
+
+			nameDrawing.Position =
+				Vector2.new(pos.X,pos.Y)
+
+
+			nameDrawing.Visible = true
+
+
+		else
+
+			nameDrawing.Visible = false
+
+		end
+
+
+	end)
+
+end
+
+
+
+-- ผู้เล่นที่มีอยู่แล้ว
+for _,player in ipairs(Players:GetPlayers()) do
+	CreateNameESP(player)
+end
+
+
+
+-- ผู้เล่นเข้าใหม่
+Players.PlayerAdded:Connect(function(player)
+
+	CreateNameESP(player)
+
+end)
+
+------------------------------------------------
+-- ANTI AFK SYSTEM
+------------------------------------------------
+
+local VirtualUser = game:GetService("VirtualUser")
+
+
+
+-- ปุ่ม GUI
+
+local antiAFKButton = createButton(
+	"ป้องกัน AFK : ปิด",
+	430
+)
+
+
+antiAFKButton.BackgroundColor3 =
+	Color3.fromRGB(200,50,50)
+
+
+
+antiAFKButton.MouseButton1Click:Connect(function()
+
+
+	ANTI_AFK_ENABLED = not ANTI_AFK_ENABLED
+
+
+
+	if ANTI_AFK_ENABLED then
+
+
+		antiAFKButton.Text =
+			"ป้องกัน AFK : เปิด"
+
+
+		antiAFKButton.BackgroundColor3 =
+			Color3.fromRGB(0,200,100)
+
+
+
+	else
+
+
+		antiAFKButton.Text =
+			"ป้องกัน AFK : ปิด"
+
+
+		antiAFKButton.BackgroundColor3 =
+			Color3.fromRGB(200,50,50)
+
+
+	end
+
+
+end)
+
+
+
+-- ป้องกัน AFK
+
+player.Idled:Connect(function()
+
+
+	if ANTI_AFK_ENABLED then
+
+
+		VirtualUser:Button2Down(
+			Vector2.new(0,0),
+			workspace.CurrentCamera.CFrame
+		)
+
+
+		task.wait(1)
+
+
+		VirtualUser:Button2Up(
+			Vector2.new(0,0),
+			workspace.CurrentCamera.CFrame
+		)
+
+
+	end
+
+
+end)
