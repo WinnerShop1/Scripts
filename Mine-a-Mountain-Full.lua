@@ -1,10 +1,3 @@
---[[
-Mine a Mountain - Custom GUI + Original Functions
-
-ไฟล์นี้สร้างจาก test.txt โดยคงฟังก์ชันเดิมไว้ และเปลี่ยนชั้น GUI เป็น GUI ตัวใหม่ที่สร้างจาก Roblox Instance โดยตรง
-ไฟล์ต้นฉบับไม่ได้ถูกแก้ไข
-]]
-
 local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
 local RunService = game:GetService("RunService")
