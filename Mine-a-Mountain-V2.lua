@@ -10,7 +10,7 @@ local Mouse = LocalPlayer:GetMouse()
 
 local afkConns = {}
 local afkRunning = true
-local repo = "https://raw.githubusercontent.com/WinnerShop1/Scripts/refs/heads/main/Mine-a-Mountain-GUI.lua"
+local Library = "https://raw.githubusercontent.com/WinnerShop1/Scripts/refs/heads/main/Mine-a-Mountain-GUI.lua"
 
 do
 	local VirtualUser = game:GetService("VirtualUser")
