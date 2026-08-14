@@ -234,11 +234,11 @@ local LUCK = {
 }
 
 local MUTATION_LUCK = {
-	Verdant = 1.5,
-	Voltaic = 2.0,
-	Gilded = 1.8,
-	Onyx = 2.8,
-	Terminus = 4.0,
+	Verdant = 15,
+	Voltaic = 20,
+	Gilded = 18,
+	Onyx = 28,
+	Terminus = 40,
 	Frost = 1.4,
 	Fire = 1.4,
 	Thunder = 1.5,
